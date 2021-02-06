@@ -3,7 +3,8 @@ import { BoardCell } from "../types/board-cell";
 
 const DEFAULTS = Object.freeze({
     BORDER_COLOR: '#000',
-    FONT_STYLE: '25px serif',
+    FONT_SIZE: 30,
+    FONT_FAMILY: 'serif',
     SQUARE_SIDE_LENGTH: 60,
 });
 
@@ -50,16 +51,17 @@ export class CanvasHelpers {
     }
 
     private drawRectangle(posX: number, posY: number, width: number, height: number, fillColor: string, strokeColor: string) {
+        const rectangle = new Path2D();
+        rectangle.rect(posX, posY, width, height);
+        
         if (fillColor) {
             this.canvasContext.fillStyle = fillColor;
         }
+        this.canvasContext.fill(rectangle);
+
         if (strokeColor) {
             this.canvasContext.strokeStyle = strokeColor;
         }
-        
-        const rectangle = new Path2D();
-        rectangle.rect(posX, posY, width, height);
-        this.canvasContext.fill(rectangle);
         this.canvasContext.stroke(rectangle);
         return rectangle;
     }
@@ -76,24 +78,27 @@ export class CanvasHelpers {
             if (fillColor) {
                 this.canvasContext.fillStyle = fillColor;
             }
-            this.canvasContext.strokeStyle = DEFAULTS.BORDER_COLOR;
             this.canvasContext.fill(boardCell.canvasRef);
+            
+            this.canvasContext.strokeStyle = DEFAULTS.BORDER_COLOR;
             this.canvasContext.stroke(boardCell.canvasRef);
+
             if (boardCell.value) {
                 this.drawText(boardCell.value, boardCell, fontColor);
             }
         }
     }
 
-    private drawText(text: string | number, boardCell: BoardCell, textColor: string) {
+    private drawText(text: number, boardCell: BoardCell, textColor: string) {
         if (text && boardCell.position) {
             if (textColor) {
                 this.canvasContext.fillStyle = textColor;
             }
-            const posX = boardCell.position.x;
-            const posY = boardCell.position.y;
+            
+            const posX = boardCell.position.x + (DEFAULTS.SQUARE_SIDE_LENGTH / 2.5) - this.calculateOffset(boardCell.value);
+            const posY = boardCell.position.y + (DEFAULTS.SQUARE_SIDE_LENGTH / 1.5);
 
-            this.canvasContext.font = DEFAULTS.FONT_STYLE;
+            this.canvasContext.font = `${this.getFontSizeForValue(boardCell.value)}px ${DEFAULTS.FONT_FAMILY}`;
             this.canvasContext.strokeStyle = textColor;
 
             this.canvasContext.fillText(`${text}`, posX, posY, DEFAULTS.SQUARE_SIDE_LENGTH);
@@ -103,11 +108,19 @@ export class CanvasHelpers {
         }
     }
 
+    private getFontSizeForValue(value: number) {
+        return DEFAULTS.FONT_SIZE - (Math.log2(value) * 0.5);
+    }
+
     private getBackgroundColor(value: number) {
         return TILE_STYLES[`${value}`]?.background || '';
     }
 
     private getTextColor(value: number) {
         return TILE_STYLES[`${value}`]?.color || '';
+    }
+
+    private calculateOffset(value: number) {
+        return Math.log2(value) * 0.5;
     }
 }

@@ -25,6 +25,7 @@ export class GameBoard {
         this.gameBoard = initialBoard ? this.fromBoard(initialBoard) : this.generateRandomBoard(size);
         
         this.canvasHelper.drawBoard(this.gameBoard);
+        this.canvasHelper.refreshBoard(this.gameBoard);
         this.initListeners();
     }
 
@@ -71,7 +72,7 @@ export class GameBoard {
             switch(keyEvent.key) {
                 case 'Tab':
                     this.debugDump();
-                    keyEvent.preventDefault();
+                    keyEvent.stopPropagation();
                     break;
                 case 'Enter':
                     this.dumpGridValues();
@@ -79,17 +80,17 @@ export class GameBoard {
                 case 'ArrowUp': 
                     this.makeMove(this.Directions.UP);
                     this.canvasHelper.refreshBoard(this.gameBoard);
-                    keyEvent.preventDefault();
+                    keyEvent.stopPropagation();
                     break;
                 case 'ArrowLeft': 
                     this.makeMove(this.Directions.LEFT);
                     this.canvasHelper.refreshBoard(this.gameBoard);
-                    keyEvent.preventDefault();
+                    keyEvent.stopPropagation();
                     break;
                 case 'ArrowRight': 
                     this.makeMove(this.Directions.RIGHT);
                     this.canvasHelper.refreshBoard(this.gameBoard);
-                    keyEvent.preventDefault();
+                    keyEvent.stopPropagation();
                     break;
                 case 'ArrowDown': 
                     this.makeMove(this.Directions.DOWN);
@@ -125,7 +126,7 @@ export class GameBoard {
         }
     }
     
-    private moveRight() {
+    private moveLeft() {
         for (let i = 0; i < this.gameBoard.length; i++) {
             for (let j=1; j<this.gameBoard[i].length; j++) {
                 const currentCell = this.gameBoard[i][j];
@@ -142,7 +143,7 @@ export class GameBoard {
         }
     }
     
-    private moveLeft() {
+    private moveRight() {
         for (let i = 0; i < this.gameBoard.length; i++) {
             for (let j=this.gameBoard[i].length - 2; j>=0; j--) {
                 const currentCell = this.gameBoard[i][j];
@@ -159,7 +160,7 @@ export class GameBoard {
         }
     }
     
-    private moveDown() {
+    private moveUp() {
         for (let i = 0; i < this.gameBoard.length; i++) {
             for (let j=this.gameBoard[i].length-2; j>=0; j--) {
                 const currentCell = this.gameBoard[j][i];
@@ -176,7 +177,7 @@ export class GameBoard {
         }
     }
     
-    private moveUp() {
+    private moveDown() {
         for (let i = 0; i < this.gameBoard.length; i++) {
             for (let j=1; j<this.gameBoard[i].length; j++) {
                 const currentCell = this.gameBoard[j][i];
