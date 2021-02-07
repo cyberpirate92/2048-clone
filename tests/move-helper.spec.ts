@@ -1,211 +1,274 @@
+import { expect } from "chai";
+import { TestUtils } from "./test-utils";
 import { MoveHelper } from '../src/helpers/move-helper';
-import { BoardCell } from '../src/types/board-cell';
-import { expect } from 'chai';
-import 'mocha';
 
-class TestUtils {
-    public static toBoardCell(values: number[][]): BoardCell[][] {
-        return values.map(row => row.map(value => {
-            return {
-                value: value,
-                position: { x: 0, y: 0 },
-                lastMoveId: 0,
-            };
-        }));
-    }
-    
-    public static toValueMatrix(cells: BoardCell[][]): number[][] {
-        return cells.map(row => row.map(cell => cell.value));
-    }
-}
+describe('Transpose', () => {
+    it('transpose 01', () => {
+        const values = [
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ];
 
-describe('MoveHelper #1: Basic Moves', () => { 
-    
-    let initialBoard = [
-        [2, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [0, 0, 0, 2],
-    ];
-    
-    it('Move Up', () => { 
         const expected = [
-            [2, 0, 0, 2],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
+            [1, 5, 9, 13],
+            [2, 6, 10, 14],
+            [3, 7, 11, 15],
+            [4, 8, 12, 16],
         ];
         
-        const cells = TestUtils.toBoardCell(initialBoard);
-        MoveHelper.moveUp(cells);
-        
-        const actual = TestUtils.toValueMatrix(cells);
-        expect(actual).to.eql(expected);
-
-        initialBoard = actual;
+        MoveHelper.transpose(values);
+        expect(values).to.eql(expected, TestUtils.dumpValues(expected, values));
     });
 
-    it('Move down', () => {
-        const expected = [
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [2, 0, 0, 2],
+    it ('transpose 02', () => {
+        const values = [
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12],
+            [13, 14, 15, 16],
+        ];
+
+        const expected = JSON.parse(JSON.stringify(values));
+        MoveHelper.transpose(values);
+        MoveHelper.transpose(values);
+        expect(values).to.eql(expected, TestUtils.dumpValues(expected, values));
+    })
+});
+
+describe('Right Move Tests', () => {
+    it('Move right 01', () => {
+        const values = [
+            [2, 0, 2, 0],
+            [2, 2, 2, 2],
+            [0, 2, 2, 0],
+            [0, 2, 2, 2],
         ];
         
-        const cells = TestUtils.toBoardCell(initialBoard);
-        MoveHelper.moveDown(cells);
-        
-        const actual = TestUtils.toValueMatrix(cells);
-        expect(actual).to.eql(expected);
-        
-        initialBoard = actual;
-    });
-
-    it('Move left', () => {
         const expected = [
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [4, 0, 0, 0],
-        ];
-        
-        const cells = TestUtils.toBoardCell(initialBoard);
-        MoveHelper.moveLeft(cells);
-        
-        const actual = TestUtils.toValueMatrix(cells);
-        expect(actual).to.eql(expected);
-
-        initialBoard = actual;
-    });
-
-    it('Move right', () => {
-        const expected = [
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
             [0, 0, 0, 4],
+            [0, 0, 4, 4],
+            [0, 0, 0, 4],
+            [0, 0, 2, 4],
         ];
-        const cells = TestUtils.toBoardCell(initialBoard);
-        MoveHelper.moveRight(cells);
+        
+        MoveHelper.moveRight(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
+    });
+    
+    it('Move right 02', () => {
+        const values = [
+            [2, 2, 2, 2],
+            [0, 2, 2, 2],
+            [2, 2, 2, 0],
+            [4, 2, 2, 4],
+        ];
+        
+        const expected = [
+            [0, 0, 4, 4],
+            [0, 0, 2, 4],
+            [0, 0, 2, 4],
+            [0, 4, 4, 4],
+        ];
+        
+        MoveHelper.moveRight(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
+    });
 
-        const actual = TestUtils.toValueMatrix(cells);
-        expect(actual).to.eql(expected);
-
-        initialBoard = actual;
+    it ('Move right 03', () => {
+        const values = [
+            [2, 4, 2, 4],
+            [16, 4, 4, 2],
+            [2, 4, 8, 8],
+            [8, 4, 2, 16]
+        ];
+        
+        const expected = [
+            [2, 4, 2, 4],
+            [0, 16, 8, 2],
+            [0, 2, 4, 16],
+            [8, 4, 2, 16],
+        ];
+        
+        MoveHelper.moveRight(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
     });
 });
 
-describe('MoveHelper #2: Basic Movement, Additions', () => {
-
-    let initialBoard = [
-        [0, 2, 0, 0],
-        [2, 0, 2, 2],
-        [0, 2, 0, 2],
-        [2, 0, 2, 0],
-    ];
-
-    it('Move Up', () => { 
-        const expected = [
-            [4, 4, 4, 4],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
+describe('Left Move Tests', () => {
+    it('Move left 01', () => {
+        const values = [
+            [2, 0, 2, 0],
+            [2, 2, 2, 2],
+            [0, 2, 2, 0],
+            [0, 2, 2, 2],
         ];
         
-        const cells = TestUtils.toBoardCell(initialBoard);
-        MoveHelper.moveUp(cells);
-        
-        const actual = TestUtils.toValueMatrix(cells);
-        expect(actual).to.eql(expected);
-    });
-
-    it('Move Left', () => { 
         const expected = [
-            [2, 0, 0, 0],
             [4, 0, 0, 0],
+            [4, 4, 0, 0],
             [4, 0, 0, 0],
-            [2, 0, 0, 0],
+            [4, 2, 0, 0],
         ];
         
-        const cells = TestUtils.toBoardCell(initialBoard);
-        MoveHelper.moveLeft(cells);
+        MoveHelper.moveLeft(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
+    });
+    
+    it('Move left 02', () => {
+        const values = [
+            [2, 2, 2, 2],
+            [0, 2, 2, 2],
+            [2, 2, 2, 0],
+            [4, 2, 2, 4],
+        ];
         
-        const actual = TestUtils.toValueMatrix(cells);
-        expect(actual).to.eql(expected);
+        const expected = [
+            [4, 4, 0, 0],
+            [4, 2, 0, 0],
+            [4, 2, 0, 0],
+            [4, 4, 4, 0],
+        ];
+        
+        MoveHelper.moveLeft(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
     });
 
-    it('Move Right', () => {
-        const expected = [
-            [0, 0, 0, 2],
-            [0, 0, 0, 4],
-            [0, 0, 0, 4],
-            [0, 0, 0, 2],
+    it ('Move left 03', () => {
+        const values = [
+            [2, 4, 2, 4],
+            [16, 4, 4, 2],
+            [2, 4, 8, 8],
+            [8, 4, 2, 16]
         ];
-
-        const cells = TestUtils.toBoardCell(initialBoard);
-        MoveHelper.moveRight(cells);
         
-        const actual = TestUtils.toValueMatrix(cells);
-        expect(actual).to.eql(expected);
-    });
-
-    it('Move Down', () => {
         const expected = [
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [4, 4, 4, 4],
+            [2, 4, 2, 4],
+            [16, 8, 2, 0],
+            [2, 4, 16, 0],
+            [8, 4, 2, 16],
         ];
-
-        const cells = TestUtils.toBoardCell(initialBoard);
-        MoveHelper.moveDown(cells);
         
-        const actual = TestUtils.toValueMatrix(cells);
-        expect(actual).to.eql(expected);
+        MoveHelper.moveLeft(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
     });
 });
 
-describe('MoveHelper #3: Move priority', () => { 
-    
-    let initialBoard = [
-        [2, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 0, 0],
-        [2, 0, 0, 0],
-    ];
-    
-    it('Move Up', () => { 
+describe('Top Move Tests', () => {
+    it('Move top 01', () => {
+        const values = [
+            [2, 0, 2, 0],
+            [2, 2, 2, 2],
+            [0, 2, 2, 0],
+            [0, 2, 2, 2],
+        ];
+        
         const expected = [
-            [4, 0, 0, 0],
-            [4, 0, 0, 0],
+            [4, 4, 4, 4],
+            [0, 2, 4, 0],
             [0, 0, 0, 0],
             [0, 0, 0, 0],
         ];
         
-        const cells = TestUtils.toBoardCell(initialBoard);
-        MoveHelper.moveUp(cells);
+        MoveHelper.moveUp(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
+    });
+    
+    it('Move top 02', () => {
+        const values = [
+            [2, 2, 2, 2],
+            [0, 2, 2, 4],
+            [2, 2, 2, 2],
+            [4, 2, 2, 4],
+        ];
         
-        const actual = TestUtils.toValueMatrix(cells);
-        expect(actual).to.eql(expected);
-
-        initialBoard = actual;
+        const expected = [
+            [4, 4, 4, 2],
+            [4, 4, 4, 4],
+            [0, 0, 0, 2],
+            [0, 0, 0, 4],
+        ];
+        
+        MoveHelper.moveUp(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
     });
 
-    it('Move up further', () => {
-        const expected = [
-            [8, 0, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
+    it('Move top 03', () => {
+        const values = [
+            [2, 4, 8, 16],
+            [16, 8, 4, 2],
+            [8, 4, 2, 16],
+            [8, 2, 16, 4],
         ];
         
-        const cells = TestUtils.toBoardCell(initialBoard);
-        MoveHelper.moveDown(cells);
+        const expected = [
+            [2, 4, 8, 16],
+            [16, 8, 4, 2],
+            [16, 4, 2, 16],
+            [0, 2, 16, 4],
+        ];
         
-        const actual = TestUtils.toValueMatrix(cells);
-        expect(actual).to.eql(expected);
+        MoveHelper.moveUp(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
+    });
+});
+
+describe('Bottom Move Tests', () => {
+    it('Move bottom 01', () => {
+        const values = [
+            [2, 0, 2, 0],
+            [2, 2, 2, 2],
+            [0, 2, 2, 0],
+            [0, 2, 2, 2],
+        ];
         
-        initialBoard = actual;
+        const expected = [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 2, 4, 0],
+            [4, 4, 4, 4],
+        ];
+        
+        MoveHelper.moveDown(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
+    });
+    
+    it('Move bottom 02', () => {
+        const values = [
+            [2, 2, 2, 2],
+            [0, 2, 2, 4],
+            [2, 2, 2, 2],
+            [4, 2, 2, 4],
+        ];
+        
+        const expected = [
+            [0, 0, 0, 2],
+            [0, 0, 0, 4],
+            [4, 4, 4, 2],
+            [4, 4, 4, 4],
+        ];
+        
+        MoveHelper.moveDown(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
+    });
+
+    it('Move bottom 03', () => {
+        const values = [
+            [2, 4, 8, 16],
+            [16, 8, 4, 2],
+            [8, 4, 2, 16],
+            [8, 2, 16, 4],
+        ];
+        
+        const expected = [
+            [0, 4, 8, 16],
+            [2, 8, 4, 2],
+            [16, 4, 2, 16],
+            [16, 2, 16, 4],
+        ];
+        
+        MoveHelper.moveDown(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
     });
 });

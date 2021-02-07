@@ -112,13 +112,13 @@ export class GameBoard {
     
     private makeMove(direction: number) {
         if (direction === this.Directions.LEFT) {
-            MoveHelper.moveLeft(this.gameBoard);
+            this.updateBoardFromValues(MoveHelper.moveLeft(this.toValueMatrix()));
         } else if (direction === this.Directions.RIGHT) {
-            MoveHelper.moveRight(this.gameBoard);
+            this.updateBoardFromValues(MoveHelper.moveRight(this.toValueMatrix()));
         } else if (direction === this.Directions.UP) {
-            MoveHelper.moveUp(this.gameBoard);
+            this.updateBoardFromValues(MoveHelper.moveUp(this.toValueMatrix()));
         } else if (direction === this.Directions.DOWN) {
-            MoveHelper.moveDown(this.gameBoard);
+            this.updateBoardFromValues(MoveHelper.moveDown(this.toValueMatrix()));
         }
         
         const emptyCells = this.getAllEmptyCells();
@@ -147,5 +147,17 @@ export class GameBoard {
             }
         }
         return emptyCells;
+    }
+
+    private toValueMatrix() {
+        return this.gameBoard.map(row => row.map(cell => cell.value));       
+    }
+
+    private updateBoardFromValues(values: number[][]) {
+        for (let i=0; i<this.gameBoard.length; i++) {
+            for (let j=0; j<this.gameBoard[i].length; j++) {
+                this.gameBoard[i][j].value = values[i][j];
+            }
+        }
     }
 }
