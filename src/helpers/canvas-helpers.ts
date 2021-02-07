@@ -1,19 +1,33 @@
 import { TILE_STYLES } from '../tile-styles';
 import { BoardCell } from "../types/board-cell";
+import { Coordinates } from '../types/coordinates';
 
 const DEFAULTS = Object.freeze({
+    FONT_SIZE: 35,
+    BORDER_WIDTH: 2,
+    CELL_PADDING: 10,
+    BORDER_RADIUS: 5,
     BORDER_COLOR: '#000',
-    FONT_SIZE: 30,
-    FONT_FAMILY: 'serif',
-    SQUARE_SIDE_LENGTH: 60,
+    SQUARE_SIDE_LENGTH: 75,
+    SHADOW_BLUR_STRENGTH: 3,
+    FONT_FAMILY: 'sans-serif',
+    GAME_OVER_FONT_COLOR: '#777',
+    GAME_OVER_FILL_COLOR: '#edcf72',
 });
 
 export class CanvasHelpers {
     private canvasContext;
+    private begin: Coordinates = { 
+        x: 0, 
+        y: 0 
+    };
+    private gridWrapper: Path2D | any;
 
     constructor(canvasContext: CanvasRenderingContext2D) {
         this.canvasContext = canvasContext;
         this.fillElement();
+        this.canvasContext.textAlign = 'center';
+        this.gridWrapper = null;
     }
 
     private fillElement() {
@@ -22,23 +36,31 @@ export class CanvasHelpers {
     }
 
     public drawBoard(board: BoardCell[][], startX: number = 0, startY: number = 0) {
-        let curX = startX;
-        let curY = startY;
+        this.begin.x = startX;
+        this.begin.y = startY;
+
+        // Draw a bounding box around grid
+        const sideLength = this.calculateWrapperLength(board.length);
+        this.gridWrapper = this.drawRoundedSquare(startX, startY, sideLength, DEFAULTS.BORDER_RADIUS, '#776E65', '#776E65');
+
+        let curX = startX + DEFAULTS.CELL_PADDING;
+        let curY = startY + DEFAULTS.CELL_PADDING;
 
         for (let i=0; i<board.length; i++) {
             for (let j=0; j<board[i].length; j++) {
                 board[i][j].position = { x: curX, y: curY };
-                board[i][j].canvasRef = this.drawSquare(
+                board[i][j].canvasRef = this.drawRoundedSquare(
                     curX, 
                     curY, 
-                    DEFAULTS.SQUARE_SIDE_LENGTH, 
+                    DEFAULTS.SQUARE_SIDE_LENGTH,
+                    DEFAULTS.BORDER_RADIUS,
                     this.getBackgroundColor(board[i][j].value), 
-                    DEFAULTS.BORDER_COLOR
+                    '',
                 );
-                curX += DEFAULTS.SQUARE_SIDE_LENGTH;
+                curX += DEFAULTS.SQUARE_SIDE_LENGTH + DEFAULTS.CELL_PADDING;
             }
-            curY += DEFAULTS.SQUARE_SIDE_LENGTH;
-            curX = 0;
+            curY += DEFAULTS.SQUARE_SIDE_LENGTH + DEFAULTS.CELL_PADDING;
+            curX = startX + DEFAULTS.CELL_PADDING;
         }
     }
 
@@ -50,66 +72,87 @@ export class CanvasHelpers {
         }
     }
 
-    private drawRectangle(posX: number, posY: number, width: number, height: number, fillColor: string, strokeColor: string) {
-        const rectangle = new Path2D();
-        rectangle.rect(posX, posY, width, height);
+    private drawRoundedSquare(posX: number, posY: number, sideLength: number, radius: number, fillStyle: string, strokeStyle: string) {
+        return this.drawRoundedRectangle(posX, posY, sideLength, sideLength, radius, fillStyle, strokeStyle);
+    }
+
+    private drawRoundedRectangle(posX: number, posY: number, width: number, height: number, radius: number, fillStyle: string, strokeStyle: string) {
+        const roundedRectangle = new Path2D();
+        roundedRectangle.moveTo(posX + radius, posY);
         
-        if (fillColor) {
-            this.canvasContext.fillStyle = fillColor;
-        }
-        this.canvasContext.fill(rectangle);
+        roundedRectangle.lineTo(posX + width - radius, posY);
+        roundedRectangle.quadraticCurveTo(posX + width, posY, posX + width, posY + radius);
+        
+        roundedRectangle.lineTo(posX + width, posY + height - radius);
+        roundedRectangle.quadraticCurveTo(posX + width, posY + height, posX + width - radius, posY + height);
+        
+        roundedRectangle.lineTo(posX + radius, posY + height);
+        roundedRectangle.quadraticCurveTo(posX, posY + height, posX, posY + height - radius);
+        
+        roundedRectangle.lineTo(posX, posY + radius);
+        roundedRectangle.quadraticCurveTo(posX, posY, posX + radius, posY);
+        roundedRectangle.closePath();
 
-        if (strokeColor) {
-            this.canvasContext.strokeStyle = strokeColor;
+        if (fillStyle) {
+            this.canvasContext.fillStyle = fillStyle;
+            this.canvasContext.fill(roundedRectangle);
         }
-        this.canvasContext.stroke(rectangle);
-        return rectangle;
+        if (strokeStyle) {
+            this.canvasContext.strokeStyle = strokeStyle;
+            this.canvasContext.stroke(roundedRectangle);
+        }
+
+        return roundedRectangle;
     }
 
-    private drawSquare(posX: number, posY: number, sideLength: number, fillColor: string, strokeColor: string) {
-        return this.drawRectangle(posX, posY, sideLength, sideLength, fillColor, strokeColor);
-    }
-
-    private updateCellValue(boardCell: BoardCell) {
-        const fillColor = this.getBackgroundColor(boardCell.value);
-        const fontColor = this.getTextColor(boardCell.value);
+    private updateCellValue(boardCell: BoardCell, isGameOver: boolean = false) {
+        const fillColor = isGameOver ? DEFAULTS.GAME_OVER_FILL_COLOR : this.getBackgroundColor(boardCell.value);
+        const fontColor = isGameOver ? DEFAULTS.GAME_OVER_FONT_COLOR : this.getTextColor(boardCell.value);
         
         if (boardCell.canvasRef) {
+            if (!isGameOver) {
+                this.setShadow('#777', DEFAULTS.SHADOW_BLUR_STRENGTH);
+            }
             if (fillColor) {
                 this.canvasContext.fillStyle = fillColor;
             }
+
             this.canvasContext.fill(boardCell.canvasRef);
             
-            this.canvasContext.strokeStyle = DEFAULTS.BORDER_COLOR;
-            this.canvasContext.stroke(boardCell.canvasRef);
-
             if (boardCell.value) {
-                this.drawText(boardCell.value, boardCell, fontColor);
+                this.drawCellValue(boardCell.value, boardCell, fontColor);
             }
         }
     }
 
-    private drawText(text: number, boardCell: BoardCell, textColor: string) {
-        if (text && boardCell.position) {
-            if (textColor) {
-                this.canvasContext.fillStyle = textColor;
+    private drawCellValue(value: number, boardCell: BoardCell, fontColor: string) {
+        if (value && boardCell.position) {
+            if (fontColor) {
+                this.canvasContext.fillStyle = fontColor;
             }
             
-            const posX = boardCell.position.x + (DEFAULTS.SQUARE_SIDE_LENGTH / 2.5) - this.calculateOffset(boardCell.value);
+            const posX = boardCell.position.x + (DEFAULTS.SQUARE_SIDE_LENGTH / 2);
             const posY = boardCell.position.y + (DEFAULTS.SQUARE_SIDE_LENGTH / 1.5);
 
             this.canvasContext.font = `${this.getFontSizeForValue(boardCell.value)}px ${DEFAULTS.FONT_FAMILY}`;
-            this.canvasContext.strokeStyle = textColor;
+            this.canvasContext.strokeStyle = fontColor;
+            this.canvasContext.lineWidth = 1;
 
-            this.canvasContext.fillText(`${text}`, posX, posY, DEFAULTS.SQUARE_SIDE_LENGTH);
-            this.canvasContext.strokeText(`${text}`, posX, posY, DEFAULTS.SQUARE_SIDE_LENGTH);
+            this.disableShadow();
+            this.canvasContext.fillText(`${value}`, posX, posY, DEFAULTS.SQUARE_SIDE_LENGTH);
+            this.canvasContext.strokeText(`${value}`, posX, posY, DEFAULTS.SQUARE_SIDE_LENGTH);
         } else {
             console.warn('Invalid arguments', arguments);
         }
     }
 
+    public calculateWrapperLength(gridSize: number) : number {
+        return gridSize * (DEFAULTS.SQUARE_SIDE_LENGTH + DEFAULTS.CELL_PADDING) + DEFAULTS.CELL_PADDING;
+    }
+
     private getFontSizeForValue(value: number) {
-        return DEFAULTS.FONT_SIZE - (Math.log2(value) * 0.5);
+        const digitCount = `${value}`.length;
+        return DEFAULTS.FONT_SIZE - ((digitCount - 1) * 2.5) ;
     }
 
     private getBackgroundColor(value: number) {
@@ -120,7 +163,33 @@ export class CanvasHelpers {
         return TILE_STYLES[`${value}`]?.color || '';
     }
 
-    private calculateOffset(value: number) {
-        return Math.log2(value) * 0.5;
+    private setShadow(shadowColor: string, shadowBlur: number) {
+        this.canvasContext.shadowColor = shadowColor;
+        this.canvasContext.shadowBlur = shadowBlur;
+        this.canvasContext.shadowOffsetX = 0;
+        this.canvasContext.shadowOffsetY = 0;
+    }
+
+    private disableShadow() {
+        this.setShadow('', 0);
+    }
+
+    public showGameEndOverlay(board: BoardCell[][]) {
+        const wrapperLength = this.calculateWrapperLength(board.length);
+        board.forEach(row => row.forEach(cell => this.updateCellValue(cell, true)));
+
+        console.log(this.gridWrapper);
+        this.canvasContext.fillStyle = '#000';
+        this.canvasContext.fill(this.gridWrapper);
+
+        const displayText = 'GAME OVER!';
+        const textPosX = this.begin.x + (wrapperLength / 2);
+        const textPosY = this.begin.y + (wrapperLength / 1.5);
+
+        this.canvasContext.fillStyle = '#777';
+        this.canvasContext.strokeStyle = '#777';
+        this.canvasContext.font = `${DEFAULTS.FONT_SIZE}px ${DEFAULTS.FONT_FAMILY}`;
+        this.canvasContext.fillText(displayText, textPosX, textPosY);
+        this.canvasContext.strokeText(displayText, textPosX, textPosY);
     }
 }

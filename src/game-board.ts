@@ -24,7 +24,7 @@ export class GameBoard {
         this.canvasHelper = new CanvasHelpers(canvasElement.getContext('2d') as CanvasRenderingContext2D);
         this.gameBoard = initialBoard ? this.fromBoard(initialBoard) : this.generateRandomBoard(size);
         
-        this.canvasHelper.drawBoard(this.gameBoard);
+        this.canvasHelper.drawBoard(this.gameBoard, 50, 50);
         this.canvasHelper.refreshBoard(this.gameBoard);
         this.initListeners();
     }
@@ -74,24 +74,30 @@ export class GameBoard {
                     this.debugDump();
                     keyEvent.stopPropagation();
                     break;
+
                 case 'Enter':
                     this.dumpGridValues();
+                    keyEvent.stopPropagation();
                     break;
+
                 case 'ArrowUp': 
                     this.makeMove(this.Directions.UP);
                     this.canvasHelper.refreshBoard(this.gameBoard);
                     keyEvent.stopPropagation();
                     break;
+
                 case 'ArrowLeft': 
                     this.makeMove(this.Directions.LEFT);
                     this.canvasHelper.refreshBoard(this.gameBoard);
                     keyEvent.stopPropagation();
                     break;
+
                 case 'ArrowRight': 
                     this.makeMove(this.Directions.RIGHT);
                     this.canvasHelper.refreshBoard(this.gameBoard);
                     keyEvent.stopPropagation();
                     break;
+
                 case 'ArrowDown': 
                     this.makeMove(this.Directions.DOWN);
                     this.canvasHelper.refreshBoard(this.gameBoard);
@@ -118,6 +124,7 @@ export class GameBoard {
 
         if (emptyCells.length === 0) {
             this.gameOver = true;
+            this.canvasHelper.showGameEndOverlay(this.gameBoard);
         } else if (emptyCells.length < 3) {
             emptyCells.forEach(cell => this.gameBoard[cell.row][cell.col].value = 2);
         } else {
@@ -126,7 +133,7 @@ export class GameBoard {
         }
     }
     
-    private moveLeft() {
+    private moveRight() {
         for (let i = 0; i < this.gameBoard.length; i++) {
             for (let j=1; j<this.gameBoard[i].length; j++) {
                 const currentCell = this.gameBoard[i][j];
@@ -143,7 +150,7 @@ export class GameBoard {
         }
     }
     
-    private moveRight() {
+    private moveLeft() {
         for (let i = 0; i < this.gameBoard.length; i++) {
             for (let j=this.gameBoard[i].length - 2; j>=0; j--) {
                 const currentCell = this.gameBoard[i][j];

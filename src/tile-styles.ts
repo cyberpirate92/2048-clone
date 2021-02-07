@@ -8,6 +8,10 @@ interface ObjectWrapper<E> {
 }
 
 export const TILE_STYLES: ObjectWrapper<TileStyle> = Object.freeze({
+    '0': {
+        background: '#9b9289',
+        color: ''
+    },
     '2': {
         background: '#eee4da',
         color: '#776e65',
