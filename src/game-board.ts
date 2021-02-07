@@ -1,5 +1,6 @@
 import { BoardCell } from './types/board-cell';
 import { Position2D } from './types/position-2d';
+import { MoveHelper } from './helpers/move-helper';
 import { CanvasHelpers } from './helpers/canvas-helpers';
 
 export class GameBoard {
@@ -111,13 +112,13 @@ export class GameBoard {
     
     private makeMove(direction: number) {
         if (direction === this.Directions.LEFT) {
-            this.moveLeft();
+            MoveHelper.moveLeft(this.gameBoard);
         } else if (direction === this.Directions.RIGHT) {
-            this.moveRight();
+            MoveHelper.moveRight(this.gameBoard);
         } else if (direction === this.Directions.UP) {
-            this.moveUp();
+            MoveHelper.moveUp(this.gameBoard);
         } else if (direction === this.Directions.DOWN) {
-            this.moveDown();
+            MoveHelper.moveDown(this.gameBoard);
         }
         
         const emptyCells = this.getAllEmptyCells();
@@ -130,74 +131,6 @@ export class GameBoard {
         } else {
             (new Array(2)).fill(0).map( _ => Math.floor(Math.random() * emptyCells.length))
             .forEach(i => this.gameBoard[emptyCells[i].row][emptyCells[i].col].value = 2);
-        }
-    }
-    
-    private moveRight() {
-        for (let i = 0; i < this.gameBoard.length; i++) {
-            for (let j=1; j<this.gameBoard[i].length; j++) {
-                const currentCell = this.gameBoard[i][j];
-                const previousCell = this.gameBoard[i][j-1];
-                
-                if (currentCell.value === 0) {
-                    currentCell.value = previousCell.value;
-                    previousCell.value = 0;
-                } else if (currentCell.value === previousCell.value) {
-                    currentCell.value += currentCell.value;
-                    previousCell.value = 0;
-                }
-            }
-        }
-    }
-    
-    private moveLeft() {
-        for (let i = 0; i < this.gameBoard.length; i++) {
-            for (let j=this.gameBoard[i].length - 2; j>=0; j--) {
-                const currentCell = this.gameBoard[i][j];
-                const previousCell = this.gameBoard[i][j+1];
-                
-                if (currentCell.value === 0) {
-                    currentCell.value = previousCell.value;
-                    previousCell.value = 0;
-                } else if (currentCell.value === previousCell.value) {
-                    currentCell.value += currentCell.value;
-                    previousCell.value = 0;
-                }
-            }
-        }
-    }
-    
-    private moveUp() {
-        for (let i = 0; i < this.gameBoard.length; i++) {
-            for (let j=this.gameBoard[i].length-2; j>=0; j--) {
-                const currentCell = this.gameBoard[j][i];
-                const previousCell = this.gameBoard[j+1][i];
-                
-                if (currentCell.value === 0) {
-                    currentCell.value = previousCell.value;
-                    previousCell.value = 0;
-                } else if (currentCell.value === previousCell.value) {
-                    currentCell.value += currentCell.value;
-                    previousCell.value = 0;
-                }
-            }
-        }
-    }
-    
-    private moveDown() {
-        for (let i = 0; i < this.gameBoard.length; i++) {
-            for (let j=1; j<this.gameBoard[i].length; j++) {
-                const currentCell = this.gameBoard[j][i];
-                const previousCell = this.gameBoard[j-1][i];
-                
-                if (currentCell.value === 0) {
-                    currentCell.value = previousCell.value;
-                    previousCell.value = 0;
-                } else if (currentCell.value === previousCell.value) {
-                    currentCell.value += currentCell.value;
-                    previousCell.value = 0;
-                }
-            }
         }
     }
     
