@@ -27,13 +27,13 @@ export class GameBoard {
         
         this.canvasHelper.drawBoard(this.gameBoard, 50, 50);
         this.canvasHelper.refreshBoard(this.gameBoard);
-        this.initListeners();
+        this.initListeners(canvasElement);
     }
-
+    
     public debugDump() {
         console.log(this.gameBoard);
     }
-
+    
     public dumpGridValues() {
         const values = this.gameBoard.map(x => x.map(y => y.value));
         console.log(values);
@@ -64,7 +64,7 @@ export class GameBoard {
         return board;
     }
     
-    private initListeners() {
+    private initListeners(canvasElement: HTMLCanvasElement) {
         window.addEventListener('keyup', (keyEvent) => {
             if (this.gameOver) {
                 console.log('Game over: Move ignored');
@@ -72,42 +72,73 @@ export class GameBoard {
             }
             switch(keyEvent.key) {
                 case 'Tab':
-                    this.debugDump();
-                    keyEvent.stopPropagation();
-                    break;
-
+                this.debugDump();
+                keyEvent.stopPropagation();
+                break;
+                
                 case 'Enter':
-                    this.dumpGridValues();
-                    keyEvent.stopPropagation();
-                    break;
-
+                this.dumpGridValues();
+                keyEvent.stopPropagation();
+                break;
+                
                 case 'ArrowUp': 
-                    this.makeMove(this.Directions.UP);
-                    this.canvasHelper.refreshBoard(this.gameBoard);
-                    keyEvent.stopPropagation();
-                    break;
-
+                this.makeMove(this.Directions.UP);
+                this.canvasHelper.refreshBoard(this.gameBoard);
+                keyEvent.stopPropagation();
+                break;
+                
                 case 'ArrowLeft': 
-                    this.makeMove(this.Directions.LEFT);
-                    this.canvasHelper.refreshBoard(this.gameBoard);
-                    keyEvent.stopPropagation();
-                    break;
-
+                this.makeMove(this.Directions.LEFT);
+                this.canvasHelper.refreshBoard(this.gameBoard);
+                keyEvent.stopPropagation();
+                break;
+                
                 case 'ArrowRight': 
-                    this.makeMove(this.Directions.RIGHT);
-                    this.canvasHelper.refreshBoard(this.gameBoard);
-                    keyEvent.stopPropagation();
-                    break;
-
+                this.makeMove(this.Directions.RIGHT);
+                this.canvasHelper.refreshBoard(this.gameBoard);
+                keyEvent.stopPropagation();
+                break;
+                
                 case 'ArrowDown': 
-                    this.makeMove(this.Directions.DOWN);
-                    this.canvasHelper.refreshBoard(this.gameBoard);
-                    keyEvent.preventDefault();
-                    break;
+                this.makeMove(this.Directions.DOWN);
+                this.canvasHelper.refreshBoard(this.gameBoard);
+                keyEvent.preventDefault();
+                break;
             }
         });
         
-        // TODO: Add event handlers for swipe left / right (mobile screens)
+        this.listenForSwipeEvents(canvasElement);
+    }
+    
+    private listenForSwipeEvents(canvasElement: HTMLCanvasElement) {
+        let touchStartX = 0, touchStartY = 0;
+        let touchEndX = 0, touchEndY = 0;
+        
+        canvasElement.addEventListener('touchstart', (touchEvent) => {
+            console.log('touchstart');
+            touchStartX = touchEvent.changedTouches[0].screenX;
+            touchStartY = touchEvent.changedTouches[0].screenY;
+        }, { passive: true });
+        
+        canvasElement.addEventListener('touchend', (touchEvent) => {
+            console.log('touchend');
+            touchEndX = touchEvent.changedTouches[0].screenX;
+            touchEndY = touchEvent.changedTouches[0].screenY;
+            
+            if (touchEndX <= touchStartX) {
+                console.log('left');
+                this.makeMove(this.Directions.LEFT);
+            } else if (touchEndX >= touchStartX) {
+                console.log('right');
+                this.makeMove(this.Directions.RIGHT);
+            } else if (touchEndY <= touchStartY) {
+                console.log('up');
+                this.makeMove(this.Directions.UP);
+            } else if (touchEndY >= touchStartY) {
+                console.log('down');
+                this.makeMove(this.Directions.DOWN);
+            }
+        }, { passive: true }); 
     }
     
     private makeMove(direction: number) {
@@ -122,7 +153,7 @@ export class GameBoard {
         }
         
         const emptyCells = this.getAllEmptyCells();
-
+        
         if (emptyCells.length === 0) {
             this.gameOver = true;
             this.canvasHelper.showGameEndOverlay(this.gameBoard);
@@ -148,11 +179,11 @@ export class GameBoard {
         }
         return emptyCells;
     }
-
+    
     private toValueMatrix() {
         return this.gameBoard.map(row => row.map(cell => cell.value));       
     }
-
+    
     private updateBoardFromValues(values: number[][]) {
         for (let i=0; i<this.gameBoard.length; i++) {
             for (let j=0; j<this.gameBoard[i].length; j++) {
