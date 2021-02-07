@@ -1,68 +1,10 @@
 export class MoveHelper {
     public static moveRight(values: number[][]) {
-        for (let i=0; i<values.length; i++) {
-            let stack = values[i].filter(x => x !== 0);
-            let temp = [];
-            
-            if (stack.length > 0) {
-                let last = stack.pop() as number;
-                while (stack.length > 0) {
-                    let current = stack.pop() as number;
-                    
-                    if (current === last) {
-                        temp.push(current + last);
-                        last = -1;
-                    } else {
-                        if (last !== -1) {                        
-                            temp.push(last);
-                        }
-                        last = current;
-                    }      
-                }
-
-                if (last !== -1) {
-                    temp.push(last);
-                }
-            }
-            values[i].fill(0);
-            for (let j=temp.length - 1; j>= 0; j--) {
-                values[i][values.length-1-j] = temp[j];
-            }
-        }
-        return values;
+        return this.makeMove(values, 'right');
     }
 
     public static moveLeft(values: number[][]) {
-        for (let i=0; i<values.length; i++) {
-            let stack = values[i].filter(x => x !== 0).reverse();
-            let temp = [];
-            
-            if (stack.length > 0) {
-                let last = stack.pop() as number;
-                while (stack.length > 0) {
-                    let current = stack.pop() as number;
-                    
-                    if (current === last) {
-                        temp.push(current + last);
-                        last = -1;
-                    } else {
-                        if (last !== -1) {                        
-                            temp.push(last);
-                        }
-                        last = current;
-                    }      
-                }
-
-                if (last !== -1) {
-                    temp.push(last);
-                }
-            }
-            values[i].fill(0);
-            for (let j=0; j<temp.length; j++) {
-                values[i][j] = temp[j];
-            }
-        }
-        return values;
+        return this.makeMove(values, 'left');
     }
 
     public static moveUp(values: number[][]) {
@@ -89,5 +31,49 @@ export class MoveHelper {
                 }
             }
         }
+    }
+
+    private static makeMove(values: number[][], direction: 'left'|'right') {
+        for (let i=0; i<values.length; i++) {
+            let stack = values[i].filter(x => x !== 0);
+            
+            if (direction === 'left') {
+                stack = stack.reverse();
+            }
+
+            let temp = [];
+            
+            if (stack.length > 0) {
+                let last = stack.pop() as number;
+                while (stack.length > 0) {
+                    let current = stack.pop() as number;
+                    
+                    if (current === last) {
+                        temp.push(current + last);
+                        last = -1;
+                    } else {
+                        if (last !== -1) {                        
+                            temp.push(last);
+                        }
+                        last = current;
+                    }      
+                }
+
+                if (last !== -1) {
+                    temp.push(last);
+                }
+            }
+            values[i].fill(0);
+            if (direction === 'left') {
+                for (let j=0; j<temp.length; j++) {
+                    values[i][j] = temp[j];
+                }
+            } else {
+                for (let j=temp.length - 1; j>= 0; j--) {
+                    values[i][values.length-1-j] = temp[j];
+                }
+            }
+        }
+        return values;
     }
 }
