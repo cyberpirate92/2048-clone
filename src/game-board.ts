@@ -16,6 +16,10 @@ export class GameBoard {
         RIGHT: 3,
     });
     
+    public get isGameOver() : boolean {
+        return this.gameOver;
+    }
+    
     constructor(canvasElement: HTMLCanvasElement, size: number, initialBoard?: number[][]) {
         if (!canvasElement) {
             throw new Error('Canvas element not provided');
@@ -155,8 +159,10 @@ export class GameBoard {
         const emptyCells = this.getAllEmptyCells();
         
         if (emptyCells.length === 0) {
-            this.gameOver = true;
-            this.canvasHelper.showGameEndOverlay(this.gameBoard);
+            if (!MoveHelper.movesPossible(this.toValueMatrix())) {
+                this.gameOver = true;
+                this.canvasHelper.showGameEndOverlay(this.gameBoard);
+            }
         } else if (emptyCells.length < 3) {
             emptyCells.forEach(cell => this.gameBoard[cell.row][cell.col].value = 2);
         } else {

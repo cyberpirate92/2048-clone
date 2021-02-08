@@ -34,7 +34,7 @@ describe('Transpose', () => {
         MoveHelper.transpose(values);
         MoveHelper.transpose(values);
         expect(values).to.eql(expected, TestUtils.dumpValues(expected, values));
-    })
+    });
 });
 
 describe('Right Move Tests', () => {
@@ -91,6 +91,25 @@ describe('Right Move Tests', () => {
             [8, 4, 2, 16],
         ];
         
+        MoveHelper.moveRight(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
+    });
+
+    it('Move right 04', () => {
+        const values = [
+            [2, 2, 2, 2],
+            [4, 4, 4, 4],
+            [8, 8, 8, 8],
+            [16, 16, 16, 16],
+        ];
+
+        const expected = [
+            [0, 0, 4, 4],
+            [0, 0, 8, 8],
+            [0, 0, 16, 16],
+            [0, 0, 32, 32],
+        ];
+
         MoveHelper.moveRight(values);
         expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
     });
@@ -153,6 +172,25 @@ describe('Left Move Tests', () => {
         MoveHelper.moveLeft(values);
         expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
     });
+
+    it('Move left 04', () => {
+        const values = [
+            [2, 2, 2, 2],
+            [4, 4, 4, 4],
+            [8, 8, 8, 8],
+            [16, 16, 16, 16],
+        ];
+
+        const expected = [
+            [4, 4, 0, 0],
+            [8, 8, 0, 0],
+            [16, 16, 0, 0],
+            [32, 32, 0, 0],
+        ];
+
+        MoveHelper.moveLeft(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
+    });
 });
 
 describe('Top Move Tests', () => {
@@ -212,10 +250,29 @@ describe('Top Move Tests', () => {
         MoveHelper.moveUp(values);
         expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
     });
+
+    it('Move top 04', () => {
+        const values = [
+            [2, 2, 2, 2],
+            [4, 4, 4, 4],
+            [8, 8, 8, 8],
+            [16, 16, 16, 16],
+        ];
+
+        const expected = [
+            [2, 2, 2, 2],
+            [4, 4, 4, 4],
+            [8, 8, 8, 8],
+            [16, 16, 16, 16],
+        ];
+
+        MoveHelper.moveUp(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
+    });
 });
 
-describe('Bottom Move Tests', () => {
-    it('Move bottom 01', () => {
+describe('Down Move Tests', () => {
+    it('Move down 01', () => {
         const values = [
             [2, 0, 2, 0],
             [2, 2, 2, 2],
@@ -234,7 +291,7 @@ describe('Bottom Move Tests', () => {
         expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
     });
     
-    it('Move bottom 02', () => {
+    it('Move down 02', () => {
         const values = [
             [2, 2, 2, 2],
             [0, 2, 2, 4],
@@ -253,7 +310,7 @@ describe('Bottom Move Tests', () => {
         expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
     });
 
-    it('Move bottom 03', () => {
+    it('Move down 03', () => {
         const values = [
             [2, 4, 8, 16],
             [16, 8, 4, 2],
@@ -270,5 +327,50 @@ describe('Bottom Move Tests', () => {
         
         MoveHelper.moveDown(values);
         expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
+    });
+
+    it('Move down 04', () => {
+        const values = [
+            [2, 2, 2, 2],
+            [4, 4, 4, 4],
+            [8, 8, 8, 8],
+            [16, 16, 16, 16],
+        ];
+
+        const expected = [
+            [2, 2, 2, 2],
+            [4, 4, 4, 4],
+            [8, 8, 8, 8],
+            [16, 16, 16, 16],
+        ];
+
+        MoveHelper.moveDown(values);
+        expect(values).to.be.eql(expected, TestUtils.dumpValues(expected, values));
+    });
+});
+
+describe('Has Possible moves?', () => {
+    it('test 01', () => {
+        const values = [
+            [2, 2, 2, 2],
+            [4, 4, 4, 4],
+            [8, 8, 8, 8],
+            [16, 16, 16, 16],
+        ];
+
+        const result = MoveHelper.movesPossible(values);
+        expect(result).to.be.true;
+    });
+
+    it('test 02', () => {
+        const values = [
+            [2, 4, 2, 4],
+            [4, 2, 4, 2],
+            [8, 16, 8, 16],
+            [16, 8, 16, 8],
+        ];
+
+        const result = MoveHelper.movesPossible(values);
+        expect(result).to.be.false;
     });
 });

@@ -1,4 +1,42 @@
 export class MoveHelper {
+
+    public static movesPossible(values: number[][]) {
+        for (let i=0; i<values.length; i++) {
+            for (let j=0; j<values[i].length; j++) {
+                // TODO: Currently this method has O(n^3) complexity, try to optimize 
+                const nextRight = this.getNextNonZeroValue(values, i, j, 'col');
+                const nextBottom = this.getNextNonZeroValue(values, i, j, 'row');
+                if (nextRight === values[i][j] || nextBottom === values[i][j]) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static getNextNonZeroValue(values: number[][], row: number, col: number, direction: 'col'|'row'): number {
+        let r = row + 1;
+        let c = col + 1;
+        let value = -1;
+
+        if (direction === 'row') {
+            while (r < values.length) {
+                if (values[r][col] !== 0) {
+                    value = values[r][col];
+                    break;
+                }
+            }
+        } else if (direction === 'col') {
+            while (c < values[row].length) {
+                if (values[row][c] !== 0) {
+                    value = values[row][c];
+                    break;
+                }
+            }
+        }
+        return value;
+    }
+
     public static moveRight(values: number[][]) {
         return this.makeMove(values, 'right');
     }
