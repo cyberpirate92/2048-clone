@@ -1,8 +1,8 @@
+import 'hammerjs';
 import { BoardCell } from './types/board-cell';
 import { Position2D } from './types/position-2d';
 import { MoveHelper } from './helpers/move-helper';
 import { CanvasHelpers } from './helpers/canvas-helpers';
-
 export class GameBoard {
     private gameOver = false;
     private moveCount: number;
@@ -18,6 +18,10 @@ export class GameBoard {
     
     public get isGameOver() : boolean {
         return this.gameOver;
+    }
+
+    public get valueMatrix(): number[][] {
+        return this.gameBoard.map(row => row.map(cell => cell.value));
     }
     
     constructor(canvasElement: HTMLCanvasElement, size: number, initialBoard?: number[][]) {
@@ -115,51 +119,44 @@ export class GameBoard {
     }
     
     private listenForSwipeEvents(canvasElement: HTMLCanvasElement) {
-        let touchStartX = 0, touchStartY = 0;
-        let touchEndX = 0, touchEndY = 0;
-        
-        canvasElement.addEventListener('touchstart', (touchEvent) => {
-            console.log('touchstart');
-            touchStartX = touchEvent.changedTouches[0].screenX;
-            touchStartY = touchEvent.changedTouches[0].screenY;
-        }, { passive: true });
-        
-        canvasElement.addEventListener('touchend', (touchEvent) => {
-            console.log('touchend');
-            touchEndX = touchEvent.changedTouches[0].screenX;
-            touchEndY = touchEvent.changedTouches[0].screenY;
-            
-            if (touchEndX <= touchStartX) {
-                console.log('left');
-                this.makeMove(this.Directions.LEFT);
-            } else if (touchEndX >= touchStartX) {
-                console.log('right');
-                this.makeMove(this.Directions.RIGHT);
-            } else if (touchEndY <= touchStartY) {
-                console.log('up');
-                this.makeMove(this.Directions.UP);
-            } else if (touchEndY >= touchStartY) {
-                console.log('down');
-                this.makeMove(this.Directions.DOWN);
-            }
-        }, { passive: true }); 
+        const hammer = new Hammer(canvasElement);
+        hammer.get('swipe').set({ 
+            direction: Hammer.DIRECTION_ALL 
+        });
+        hammer.on('swiperight', () => { 
+            this.makeMove(this.Directions.RIGHT);
+            this.canvasHelper.refreshBoard(this.gameBoard);
+        });
+        hammer.on('swipeleft', () => { 
+            this.makeMove(this.Directions.LEFT);
+            this.canvasHelper.refreshBoard(this.gameBoard);
+        });
+        hammer.on('swipeup', () => { 
+            this.makeMove(this.Directions.UP);
+            this.canvasHelper.refreshBoard(this.gameBoard);
+        });
+        hammer.on('swipedown', () => { 
+            this.makeMove(this.Directions.DOWN);
+            this.canvasHelper.refreshBoard(this.gameBoard);
+        });
     }
     
     private makeMove(direction: number) {
+        console.log('Moving ', direction);
         if (direction === this.Directions.LEFT) {
-            this.updateBoardFromValues(MoveHelper.moveLeft(this.toValueMatrix()));
+            this.updateBoardFromValues(MoveHelper.moveLeft(this.valueMatrix));
         } else if (direction === this.Directions.RIGHT) {
-            this.updateBoardFromValues(MoveHelper.moveRight(this.toValueMatrix()));
+            this.updateBoardFromValues(MoveHelper.moveRight(this.valueMatrix));
         } else if (direction === this.Directions.UP) {
-            this.updateBoardFromValues(MoveHelper.moveUp(this.toValueMatrix()));
+            this.updateBoardFromValues(MoveHelper.moveUp(this.valueMatrix));
         } else if (direction === this.Directions.DOWN) {
-            this.updateBoardFromValues(MoveHelper.moveDown(this.toValueMatrix()));
+            this.updateBoardFromValues(MoveHelper.moveDown(this.valueMatrix));
         }
         
         const emptyCells = this.getAllEmptyCells();
         
         if (emptyCells.length === 0) {
-            if (!MoveHelper.movesPossible(this.toValueMatrix())) {
+            if (!MoveHelper.movesPossible(this.valueMatrix)) {
                 this.gameOver = true;
                 this.canvasHelper.showGameEndOverlay(this.gameBoard);
             }
@@ -184,10 +181,6 @@ export class GameBoard {
             }
         }
         return emptyCells;
-    }
-    
-    private toValueMatrix() {
-        return this.gameBoard.map(row => row.map(cell => cell.value));       
     }
     
     private updateBoardFromValues(values: number[][]) {
