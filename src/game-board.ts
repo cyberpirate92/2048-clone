@@ -1,25 +1,19 @@
 import 'hammerjs';
 import { BoardCell } from './types/board-cell';
+import { Directions } from './types/directions';
 import { Position2D } from './types/position-2d';
 import { MoveHelper } from './helpers/move-helper';
 import { CanvasHelpers } from './helpers/canvas-helpers';
+
 export class GameBoard {
     private gameOver = false;
-    private moveCount: number;
     private gameBoard: BoardCell[][];
     private canvasHelper: CanvasHelpers;
-    
-    private Directions = Object.freeze({
-        UP: 0,
-        DOWN: 1,
-        LEFT: 2,
-        RIGHT: 3,
-    });
     
     public get isGameOver() : boolean {
         return this.gameOver;
     }
-
+    
     public get valueMatrix(): number[][] {
         return this.gameBoard.map(row => row.map(cell => cell.value));
     }
@@ -29,12 +23,11 @@ export class GameBoard {
             throw new Error('Canvas element not provided');
         } 
         
-        this.moveCount = 0;
         this.canvasHelper = new CanvasHelpers(canvasElement.getContext('2d') as CanvasRenderingContext2D);
         this.gameBoard = initialBoard ? this.fromBoard(initialBoard) : this.generateRandomBoard(size);
         
-        this.canvasHelper.drawBoard(this.gameBoard, 50, 50);
-        this.canvasHelper.refreshBoard(this.gameBoard);
+        this.canvasHelper.drawBoard(this.gameBoard);
+        this.canvasHelper.refreshBoard(this.gameBoard, Directions.NONE);
         this.initListeners(canvasElement);
     }
     
@@ -47,23 +40,23 @@ export class GameBoard {
         console.log(values);
     }
     
-    private fromBoard(board: number[][]) {
+    private fromBoard(board: number[][]): BoardCell[][] {
         return board.map(row => row.map(col => {
             return {
                 value: col,
                 position: null,
-                lastMoveId: this.moveCount,
-            } as BoardCell;
+                lastValue: col,
+            };
         }));
     }
     
-    private generateRandomBoard(size: number) {
+    private generateRandomBoard(size: number): BoardCell[][] {
         let board = (new Array(size)).fill(0).map( _ => (new Array(size)).fill(null).map( _ => {
             return {
                 value: 0,
                 position: null,
-                lastMoveId: this.moveCount,
-            } as BoardCell;
+                lastValue: 0,
+            };
         }));
         
         // Generate 4 random numbers
@@ -78,6 +71,7 @@ export class GameBoard {
                 console.log('Game over: Move ignored');
                 return;
             }
+            
             switch(keyEvent.key) {
                 case 'Tab':
                 this.debugDump();
@@ -90,26 +84,26 @@ export class GameBoard {
                 break;
                 
                 case 'ArrowUp': 
-                this.makeMove(this.Directions.UP);
-                this.canvasHelper.refreshBoard(this.gameBoard);
+                this.makeMove(Directions.UP);
+                this.canvasHelper.refreshBoard(this.gameBoard, Directions.UP);
                 keyEvent.stopPropagation();
                 break;
                 
                 case 'ArrowLeft': 
-                this.makeMove(this.Directions.LEFT);
-                this.canvasHelper.refreshBoard(this.gameBoard);
+                this.makeMove(Directions.LEFT);
+                this.canvasHelper.refreshBoard(this.gameBoard, Directions.LEFT);
                 keyEvent.stopPropagation();
                 break;
                 
                 case 'ArrowRight': 
-                this.makeMove(this.Directions.RIGHT);
-                this.canvasHelper.refreshBoard(this.gameBoard);
+                this.makeMove(Directions.RIGHT);
+                this.canvasHelper.refreshBoard(this.gameBoard, Directions.RIGHT);
                 keyEvent.stopPropagation();
                 break;
                 
                 case 'ArrowDown': 
-                this.makeMove(this.Directions.DOWN);
-                this.canvasHelper.refreshBoard(this.gameBoard);
+                this.makeMove(Directions.DOWN);
+                this.canvasHelper.refreshBoard(this.gameBoard, Directions.DOWN);
                 keyEvent.preventDefault();
                 break;
             }
@@ -124,32 +118,31 @@ export class GameBoard {
             direction: Hammer.DIRECTION_ALL 
         });
         hammer.on('swiperight', () => { 
-            this.makeMove(this.Directions.RIGHT);
-            this.canvasHelper.refreshBoard(this.gameBoard);
+            this.makeMove(Directions.RIGHT);
+            this.canvasHelper.refreshBoard(this.gameBoard, Directions.RIGHT);
         });
         hammer.on('swipeleft', () => { 
-            this.makeMove(this.Directions.LEFT);
-            this.canvasHelper.refreshBoard(this.gameBoard);
+            this.makeMove(Directions.LEFT);
+            this.canvasHelper.refreshBoard(this.gameBoard, Directions.LEFT);
         });
         hammer.on('swipeup', () => { 
-            this.makeMove(this.Directions.UP);
-            this.canvasHelper.refreshBoard(this.gameBoard);
+            this.makeMove(Directions.UP);
+            this.canvasHelper.refreshBoard(this.gameBoard, Directions.UP);
         });
         hammer.on('swipedown', () => { 
-            this.makeMove(this.Directions.DOWN);
-            this.canvasHelper.refreshBoard(this.gameBoard);
+            this.makeMove(Directions.DOWN);
+            this.canvasHelper.refreshBoard(this.gameBoard, Directions.DOWN);
         });
     }
     
-    private makeMove(direction: number) {
-        console.log('Moving ', direction);
-        if (direction === this.Directions.LEFT) {
+    private makeMove(direction: Directions) {
+        if (direction === Directions.LEFT) {
             this.updateBoardFromValues(MoveHelper.moveLeft(this.valueMatrix));
-        } else if (direction === this.Directions.RIGHT) {
+        } else if (direction === Directions.RIGHT) {
             this.updateBoardFromValues(MoveHelper.moveRight(this.valueMatrix));
-        } else if (direction === this.Directions.UP) {
+        } else if (direction === Directions.UP) {
             this.updateBoardFromValues(MoveHelper.moveUp(this.valueMatrix));
-        } else if (direction === this.Directions.DOWN) {
+        } else if (direction === Directions.DOWN) {
             this.updateBoardFromValues(MoveHelper.moveDown(this.valueMatrix));
         }
         
@@ -186,6 +179,7 @@ export class GameBoard {
     private updateBoardFromValues(values: number[][]) {
         for (let i=0; i<this.gameBoard.length; i++) {
             for (let j=0; j<this.gameBoard[i].length; j++) {
+                this.gameBoard[i][j].lastValue = this.gameBoard[i][j].value;
                 this.gameBoard[i][j].value = values[i][j];
             }
         }
