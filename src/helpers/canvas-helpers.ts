@@ -1,5 +1,6 @@
 import { TILE_STYLES } from '../tile-styles';
 import { BoardCell } from "../types/board-cell";
+import { Directions } from '../types/directions';
 import { Coordinates } from '../types/coordinates';
 
 const DEFAULTS = Object.freeze({
@@ -22,60 +23,67 @@ export class CanvasHelpers {
         y: 0 
     };
     private gridWrapper: Path2D | any;
-
+    
     constructor(canvasContext: CanvasRenderingContext2D) {
         this.canvasContext = canvasContext;
         this.fillElement();
         this.canvasContext.textAlign = 'center';
         this.gridWrapper = null;
     }
-
+    
     private fillElement() {
         this.canvasContext.canvas.width = window.innerWidth;
         this.canvasContext.canvas.height = window.innerHeight;
     }
 
-    public drawBoard(board: BoardCell[][], startX: number = 0, startY: number = 0) {
-        this.begin.x = startX;
-        this.begin.y = startY;
-
+    private getCenter(board: BoardCell[][]): Coordinates {
+        if (window.innerWidth <= 300) {
+            return { x: 0, y: 0 };
+        } else {
+            const sideLength = this.calculateWrapperLength(board.length);
+            return {
+                x: Math.floor((window.innerWidth / 2.1) - (sideLength / 2)),
+                y: Math.floor((window.innerHeight / 2.1) - (sideLength / 2)),
+            };
+        }
+    }
+    
+    public drawBoard(board: BoardCell[][], startX: number = -1, startY: number = -1) {
+        const canvasCenter = this.getCenter(board);
+        
+        this.begin.x = startX >= 0 ? startX : canvasCenter.x;
+        this.begin.y = startY >= 0 ? startY : canvasCenter.y;
+        
         // Draw a bounding box around grid
         const sideLength = this.calculateWrapperLength(board.length);
-        this.gridWrapper = this.drawRoundedSquare(startX, startY, sideLength, DEFAULTS.BORDER_RADIUS, '#776E65', '#776E65');
-
-        let curX = startX + DEFAULTS.CELL_PADDING;
-        let curY = startY + DEFAULTS.CELL_PADDING;
-
+        this.gridWrapper = this.drawRoundedSquare(this.begin.x, this.begin.y, sideLength, DEFAULTS.BORDER_RADIUS, '#776E65', '#776E65');
+        
+        let curX = this.begin.x + DEFAULTS.CELL_PADDING;
+        let curY = this.begin.y + DEFAULTS.CELL_PADDING;
+        
         for (let i=0; i<board.length; i++) {
             for (let j=0; j<board[i].length; j++) {
                 board[i][j].position = { x: curX, y: curY };
-                board[i][j].canvasRef = this.drawRoundedSquare(
-                    curX, 
-                    curY, 
-                    DEFAULTS.SQUARE_SIDE_LENGTH,
-                    DEFAULTS.BORDER_RADIUS,
-                    this.getBackgroundColor(board[i][j].value), 
-                    '',
-                );
+                board[i][j].canvasRef = this.drawRoundedSquare(curX, curY, DEFAULTS.SQUARE_SIDE_LENGTH, DEFAULTS.BORDER_RADIUS, this.getBackgroundColor(board[i][j].value), '');
                 curX += DEFAULTS.SQUARE_SIDE_LENGTH + DEFAULTS.CELL_PADDING;
             }
             curY += DEFAULTS.SQUARE_SIDE_LENGTH + DEFAULTS.CELL_PADDING;
-            curX = startX + DEFAULTS.CELL_PADDING;
+            curX = this.begin.x + DEFAULTS.CELL_PADDING;
         }
     }
-
-    public refreshBoard(board: BoardCell[][]) {
+    
+    public refreshBoard(board: BoardCell[][], direction: Directions) {
         for (let i=0; i<board.length; i++) {
             for (let j=0; j<board[i].length; j++) {
-                this.updateCellValue(board[i][j]);
+                this.updateCellValue(board[i][j], direction);
             }
         }
     }
-
+    
     private drawRoundedSquare(posX: number, posY: number, sideLength: number, radius: number, fillStyle: string, strokeStyle: string) {
         return this.drawRoundedRectangle(posX, posY, sideLength, sideLength, radius, fillStyle, strokeStyle);
     }
-
+    
     private drawRoundedRectangle(posX: number, posY: number, width: number, height: number, radius: number, fillStyle: string, strokeStyle: string) {
         const roundedRectangle = new Path2D();
         roundedRectangle.moveTo(posX + radius, posY);
@@ -92,7 +100,7 @@ export class CanvasHelpers {
         roundedRectangle.lineTo(posX, posY + radius);
         roundedRectangle.quadraticCurveTo(posX, posY, posX + radius, posY);
         roundedRectangle.closePath();
-
+        
         if (fillStyle) {
             this.canvasContext.fillStyle = fillStyle;
             this.canvasContext.fill(roundedRectangle);
@@ -101,14 +109,15 @@ export class CanvasHelpers {
             this.canvasContext.strokeStyle = strokeStyle;
             this.canvasContext.stroke(roundedRectangle);
         }
-
+        
         return roundedRectangle;
     }
-
-    private updateCellValue(boardCell: BoardCell, isGameOver: boolean = false) {
+    
+    private updateCellValue(boardCell: BoardCell, direction: Directions, isGameOver: boolean = false) {
         const fillColor = isGameOver ? DEFAULTS.GAME_OVER_FILL_COLOR : this.getBackgroundColor(boardCell.value);
         const fontColor = isGameOver ? DEFAULTS.GAME_OVER_FONT_COLOR : this.getTextColor(boardCell.value);
         
+        console.log(direction);
         if (boardCell.canvasRef) {
             if (!isGameOver) {
                 this.setShadow('#777', DEFAULTS.SHADOW_BLUR_STRENGTH);
@@ -116,15 +125,14 @@ export class CanvasHelpers {
             if (fillColor) {
                 this.canvasContext.fillStyle = fillColor;
             }
-
-            this.canvasContext.fill(boardCell.canvasRef);
             
+            this.canvasContext.fill(boardCell.canvasRef);
             if (boardCell.value) {
                 this.drawCellValue(boardCell.value, boardCell, fontColor);
             }
         }
     }
-
+    
     private drawCellValue(value: number, boardCell: BoardCell, fontColor: string) {
         if (value && boardCell.position) {
             if (fontColor) {
@@ -133,11 +141,11 @@ export class CanvasHelpers {
             
             const posX = boardCell.position.x + (DEFAULTS.SQUARE_SIDE_LENGTH / 2);
             const posY = boardCell.position.y + (DEFAULTS.SQUARE_SIDE_LENGTH / 1.5);
-
+            
             this.canvasContext.font = `${this.getFontSizeForValue(boardCell.value)}px ${DEFAULTS.FONT_FAMILY}`;
             this.canvasContext.strokeStyle = fontColor;
             this.canvasContext.lineWidth = 1;
-
+            
             this.disableShadow();
             this.canvasContext.fillText(`${value}`, posX, posY, DEFAULTS.SQUARE_SIDE_LENGTH);
             this.canvasContext.strokeText(`${value}`, posX, posY, DEFAULTS.SQUARE_SIDE_LENGTH);
@@ -145,47 +153,46 @@ export class CanvasHelpers {
             console.warn('Invalid arguments', arguments);
         }
     }
-
+    
     public calculateWrapperLength(gridSize: number) : number {
         return gridSize * (DEFAULTS.SQUARE_SIDE_LENGTH + DEFAULTS.CELL_PADDING) + DEFAULTS.CELL_PADDING;
     }
-
+    
     private getFontSizeForValue(value: number) {
         const digitCount = `${value}`.length;
         return DEFAULTS.FONT_SIZE - ((digitCount - 1) * 2.5) ;
     }
-
+    
     private getBackgroundColor(value: number) {
         return TILE_STYLES[`${value}`]?.background || '';
     }
-
+    
     private getTextColor(value: number) {
         return TILE_STYLES[`${value}`]?.color || '';
     }
-
+    
     private setShadow(shadowColor: string, shadowBlur: number) {
         this.canvasContext.shadowColor = shadowColor;
         this.canvasContext.shadowBlur = shadowBlur;
         this.canvasContext.shadowOffsetX = 0;
         this.canvasContext.shadowOffsetY = 0;
     }
-
+    
     private disableShadow() {
         this.setShadow('', 0);
     }
-
+    
     public showGameEndOverlay(board: BoardCell[][]) {
         const wrapperLength = this.calculateWrapperLength(board.length);
-        board.forEach(row => row.forEach(cell => this.updateCellValue(cell, true)));
-
-        console.log(this.gridWrapper);
+        board.forEach(row => row.forEach(cell => this.updateCellValue(cell, Directions.NONE, true)));
+        
         this.canvasContext.fillStyle = '#000';
         this.canvasContext.fill(this.gridWrapper);
-
+        
         const displayText = 'GAME OVER!';
         const textPosX = this.begin.x + (wrapperLength / 2);
         const textPosY = this.begin.y + (wrapperLength / 1.5);
-
+        
         this.canvasContext.fillStyle = '#777';
         this.canvasContext.strokeStyle = '#777';
         this.canvasContext.font = `${DEFAULTS.FONT_SIZE}px ${DEFAULTS.FONT_FAMILY}`;

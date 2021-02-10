@@ -6,7 +6,7 @@ export class TestUtils {
             return {
                 value: value,
                 position: { x: 0, y: 0 },
-                lastMoveId: 0,
+                lastValue: value,
             };
         }));
     }
